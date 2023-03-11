@@ -1,19 +1,27 @@
 import argparse
 import os
-from os import environ as env
+import pathlib
 
-from book_maker.loader import BOOK_LOADER_DICT
-from book_maker.translator import MODEL_DICT
+from typing import Optional
+
+from book_maker.driver import DRIVER_TYPE_FOR_FILE_EXTENSION
+from book_maker.translator import MODEL_DICT, Translator
 from book_maker.utils import LANGUAGES, TO_LANGUAGE_CODE
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--book_name",
-        dest="book_name",
+        "--input-path",
+        dest="input_path",
         type=str,
-        help="path of the epub file to be translated",
+        help="path of the file to be translated",
+    )
+    parser.add_argument(
+        "--output-path",
+        dest="output_path",
+        type=str,
+        help="path of the translated document to output",
     )
     parser.add_argument(
         "--openai_key",
@@ -25,7 +33,7 @@ def main():
     )
     parser.add_argument(
         "--test",
-        dest="test",
+        dest="is_test",
         action="store_true",
         help="only the first 10 paragraphs will be translated, for testing",
     )
@@ -69,12 +77,12 @@ def main():
         default="",
         help="use proxy like http://127.0.0.1:7890",
     )
-    # args to change api_base
+    # args to change api_url
     parser.add_argument(
-        "--api_base",
-        dest="api_base",
+        "--api-url",
+        dest="api_url",
         type=str,
-        help="specify base url other than the OpenAI's official API address",
+        help="specify API's url other than the OpenAI's official API address",
     )
     parser.add_argument(
         "--translate-tags",
@@ -84,23 +92,23 @@ def main():
         help="example --translate-tags p,blockquote",
     )
     parser.add_argument(
-        "--allow_navigable_strings",
+        "--allow-navigable-strings",
         dest="allow_navigable_strings",
         action="store_true",
         default=False,
         help="allow NavigableStrings to be translated",
     )
 
-    options = parser.parse_args()
-    PROXY = options.proxy
+    args = parser.parse_args()
+    PROXY = args.proxy
     if PROXY != "":
         os.environ["http_proxy"] = PROXY
         os.environ["https_proxy"] = PROXY
 
-    translate_model = MODEL_DICT.get(options.model)
+    translate_model: Optional[Translator] = MODEL_DICT.get(args.model)
     assert translate_model is not None, "unsupported model"
-    if options.model in ["gpt3", "chatgptapi"]:
-        OPENAI_API_KEY = options.openai_key or env.get("OPENAI_API_KEY")
+    if args.model in ["gpt3", "chatgptapi"]:
+        OPENAI_API_KEY = args.openai_key or os.environ.get("OPENAI_API_KEY")
         if not OPENAI_API_KEY:
             raise Exception(
                 "OpenAI API key not provided, please google how to obtain it"
@@ -108,36 +116,40 @@ def main():
     else:
         OPENAI_API_KEY = ""
 
-    book_type = options.book_name.split(".")[-1]
-    support_type_list = list(BOOK_LOADER_DICT.keys())
-    if book_type not in support_type_list:
+    # this will return a tuple of root and extension
+    input_path = pathlib.Path(args.input_path)
+    output_path = pathlib.Path(args.output_path) if args.output_path is not None else None
+    file_extension = input_path.suffix
+    support_type_list = list(DRIVER_TYPE_FOR_FILE_EXTENSION.keys())
+    if file_extension not in support_type_list:
         raise Exception(
             f"now only support files of these formats: {','.join(support_type_list)}"
         )
 
-    book_loader = BOOK_LOADER_DICT.get(book_type)
-    assert book_loader is not None, "unsupported loader"
-    language = options.language
-    if options.language in LANGUAGES:
+    driver_type = DRIVER_TYPE_FOR_FILE_EXTENSION.get(file_extension)
+    assert driver_type is not None, "unsupported type: {}".format(file_extension)
+
+    language = args.language
+    if args.language in LANGUAGES:
         # use the value for prompt
         language = LANGUAGES.get(language, language)
 
-    # change api_base for issue #42
-    model_api_base = options.api_base
+    user_info = driver_type.create_user_info(args)
 
-    e = book_loader(
-        options.book_name,
+    driver = driver_type(
+        input_path,
         translate_model,
         OPENAI_API_KEY,
-        options.resume,
+        args.resume,
         language=language,
-        model_api_base=model_api_base,
-        is_test=options.test,
-        test_num=options.test_num,
-        translate_tags=options.translate_tags,
-        allow_navigable_strings=options.allow_navigable_strings,
+        user_info=user_info,
+        output_path=output_path,
+        api_url=args.api_url,
+        is_test=args.is_test,
+        test_num=args.test_num,
     )
-    e.make_bilingual_book()
+
+    driver.make()
 
 
 if __name__ == "__main__":

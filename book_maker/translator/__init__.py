@@ -1,3 +1,4 @@
+from book_maker.translator.translator import Translator
 from book_maker.translator.chatgptapi_translator import ChatGPTAPI
 from book_maker.translator.google_translator import Google
 from book_maker.translator.gpt3_translator import GPT3

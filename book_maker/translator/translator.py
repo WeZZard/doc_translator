@@ -2,7 +2,7 @@ import itertools
 from abc import ABC, abstractmethod
 
 
-class Base(ABC):
+class Translator(ABC):
     def __init__(self, key, language):
         self.keys = itertools.cycle(key.split(","))
         self.language = language

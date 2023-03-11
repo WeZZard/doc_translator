@@ -1,5 +1,5 @@
-from .base_translator import Base
+from .translator import Translator
 
 
-class DeepL(Base):
+class DeepL(Translator):
     pass

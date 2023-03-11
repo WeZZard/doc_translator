@@ -2,10 +2,10 @@ import time
 
 import openai
 
-from .base_translator import Base
+from .translator import Translator
 
 
-class ChatGPTAPI(Base):
+class ChatGPTAPI(Translator):
     def __init__(self, key, language, api_base=None):
         super().__init__(key, language)
         self.key_len = len(key.split(","))

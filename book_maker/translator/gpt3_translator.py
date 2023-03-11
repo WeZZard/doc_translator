@@ -1,15 +1,15 @@
 import requests
 from rich import print
 
-from .base_translator import Base
+from .translator import Translator
 
 
-class GPT3(Base):
-    def __init__(self, key, language, api_base=None):
+class GPT3(Translator):
+    def __init__(self, key, language, api_url=None):
         super().__init__(key, language)
         self.api_url = (
-            f"{api_base}v1/completions"
-            if api_base
+            f"{api_url}v1/completions"
+            if api_url
             else "https://api.openai.com/v1/completions"
         )
         self.headers = {

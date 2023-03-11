@@ -3,39 +3,46 @@ import pickle
 import sys
 from copy import copy
 from pathlib import Path
+from typing import Optional, Dict, Any
 
 from bs4 import BeautifulSoup as bs
 from ebooklib import ITEM_DOCUMENT, epub
 from rich import print
 from tqdm import tqdm
 
-from .base_loader import BaseBookLoader
+from book_maker.translator import Translator
+from .document_driver import DocumentDriver
 
 
-class EPUBBookLoader(BaseBookLoader):
+class EPUBBookDriver(DocumentDriver):
+
+    @staticmethod
+    def create_user_info(args) -> Dict[str, Any]:
+        return {
+            'translate_tags' : args.translate_tags,
+            'allow_navigable_strings' : args.allow_navigable_strings
+        }
+
     def __init__(
         self,
-        epub_name,
-        model,
-        key,
-        resume,
-        language,
-        model_api_base=None,
-        is_test=False,
-        test_num=5,
-        translate_tags="p",
-        allow_navigable_strings=False,
+        input_path: Path,
+        model_type: Translator,
+        key: str,
+        resume: bool,
+        language: str,
+        user_info: Dict[str, Any],
+        output_path: Optional[Path] = None,
+        api_url: Optional[str] = None,
+        is_test: bool = False,
+        test_num: int = 5,
     ):
-        self.epub_name = epub_name
-        self.new_epub = epub.EpubBook()
-        self.translate_model = model(key, language, model_api_base)
-        self.is_test = is_test
-        self.test_num = test_num
+        translate_tags: str = user_info[translate_tags]
+        allow_navigable_strings: bool = user_info[allow_navigable_strings]
         self.translate_tags = translate_tags
         self.allow_navigable_strings = allow_navigable_strings
-
+        self.new_epub = epub.EpubBook()
         try:
-            self.origin_book = epub.read_epub(self.epub_name)
+            self.origin_book = epub.read_epub(self.input_path.absolute)
         except Exception:
             # tricky for #71 if you don't know why please check the issue and ignore this
             # when upstream change will TODO fix this
@@ -50,13 +57,24 @@ class EPUBBookLoader(BaseBookLoader):
                 self.book.set_direction(spine.get("page-progression-direction", None))
 
             epub.EpubReader._load_spine = _load_spine
-            self.origin_book = epub.read_epub(self.epub_name)
+            self.origin_book = epub.read_epub(self.input_path.absolute)
 
         self.p_to_save = []
-        self.resume = resume
-        self.bin_path = f"{Path(epub_name).parent}/.{Path(epub_name).stem}.temp.bin"
-        if self.resume:
+        self.bin_path = f"{input_path.parent}/.{input_path.stem}.temp.bin"
+        if resume:
             self.load_state()
+        super().__init__(
+            input_path, 
+            model_type, 
+            key, 
+            resume,
+            language,
+            user_info,
+            output_path=output_path,
+            api_url=api_url,
+            is_test=is_test, 
+            test_num=test_num,
+        )
 
     @staticmethod
     def _is_special_text(text):
@@ -69,7 +87,7 @@ class EPUBBookLoader(BaseBookLoader):
         new_book.toc = book.toc
         return new_book
 
-    def make_bilingual_book(self):
+    def make(self):
         new_book = self._make_new_book(self.origin_book)
         all_items = list(self.origin_book.get_items())
         trans_taglist = self.translate_tags.split(",")
@@ -117,8 +135,9 @@ class EPUBBookLoader(BaseBookLoader):
                             break
                     item.content = soup.prettify().encode()
                 new_book.add_item(item)
-            name, _ = os.path.splitext(self.epub_name)
-            epub.write_epub(f"{name}_bilingual.epub", new_book, {})
+            name = self.input_path.stem
+            output_path = self.output_path if self.output_path is not None else f"{name}_bilingual.epub"
+            epub.write_epub(output_path, new_book, {})
             pbar.close()
         except (KeyboardInterrupt, Exception) as e:
             print(e)
@@ -135,7 +154,7 @@ class EPUBBookLoader(BaseBookLoader):
             raise Exception("can not load resume file")
 
     def _save_temp_book(self):
-        origin_book_temp = epub.read_epub(self.epub_name)
+        origin_book_temp = epub.read_epub(self.input_path.absolute)
         new_temp_book = self._make_new_book(origin_book_temp)
         p_to_save_len = len(self.p_to_save)
         trans_taglist = self.translate_tags.split(",")
@@ -161,7 +180,7 @@ class EPUBBookLoader(BaseBookLoader):
                     # for save temp book
                     item.content = soup.prettify().encode()
                 new_temp_book.add_item(item)
-            name, _ = os.path.splitext(self.epub_name)
+            name = self.input_path.stem
             epub.write_epub(f"{name}_bilingual_temp.epub", new_temp_book, {})
         except Exception as e:
             # TODO handle it
