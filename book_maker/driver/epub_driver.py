@@ -34,7 +34,7 @@ class EPUBBookDriver(DocumentDriver):
         output_path: Optional[Path] = None,
         api_url: Optional[str] = None,
         is_test: bool = False,
-        test_num: int = 5,
+        test_count: int = 5,
     ):
         translate_tags: str = user_info[translate_tags]
         allow_navigable_strings: bool = user_info[allow_navigable_strings]
@@ -73,7 +73,7 @@ class EPUBBookDriver(DocumentDriver):
             output_path=output_path,
             api_url=api_url,
             is_test=is_test, 
-            test_num=test_num,
+            test_count=test_count,
         )
 
     @staticmethod
@@ -103,7 +103,7 @@ class EPUBBookDriver(DocumentDriver):
             else len(bs(i.content, "html.parser").findAll(text=True))
             for i in all_items
         )
-        pbar = tqdm(total=self.test_num) if self.is_test else tqdm(total=all_p_length)
+        pbar = tqdm(total=self.test_count) if self.is_test else tqdm(total=all_p_length)
         index = 0
         p_to_save_len = len(self.p_to_save)
         try:
@@ -113,7 +113,7 @@ class EPUBBookDriver(DocumentDriver):
                     p_list = soup.findAll(trans_taglist)
                     if self.allow_navigable_strings:
                         p_list.extend(soup.findAll(text=True))
-                    is_test_done = self.is_test and index > self.test_num
+                    is_test_done = self.is_test and index > self.test_count
                     for p in p_list:
                         if is_test_done or not p.text or self._is_special_text(p.text):
                             continue
@@ -131,7 +131,7 @@ class EPUBBookDriver(DocumentDriver):
                             self._save_progress()
                         # pbar.update(delta) not pbar.update(index)?
                         pbar.update(1)
-                        if self.is_test and index >= self.test_num:
+                        if self.is_test and index >= self.test_count:
                             break
                     item.content = soup.prettify().encode()
                 new_book.add_item(item)

@@ -32,13 +32,13 @@ class DocumentDriver(ABC):
         output_path: Optional[Path]=None,
         api_url: Optional[str] = None,
         is_test: bool = False,
-        test_num: int = 5,
+        test_count: int = 5,
     ):
         self.input_path: Path = input_path
         self.output_path: Optional[Path] = output_path
         self.translate_model: Translator = model_type(key, language, api_url)
         self.is_test: bool = is_test
-        self.test_num: int = test_num
+        self.test_count: int = test_count
         self.resume: bool = resume
 
     @abstractmethod

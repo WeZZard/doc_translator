@@ -24,7 +24,7 @@ def main():
         help="path of the translated document to output",
     )
     parser.add_argument(
-        "--openai_key",
+        "--openai-key",
         dest="openai_key",
         type=str,
         default="",
@@ -38,8 +38,8 @@ def main():
         help="only the first 10 paragraphs will be translated, for testing",
     )
     parser.add_argument(
-        "--test_num",
-        dest="test_num",
+        "--test-count",
+        dest="test_count",
         type=int,
         default=10,
         help="how many paragraphs will be translated for testing",
@@ -123,7 +123,7 @@ def main():
     support_type_list = list(DRIVER_TYPE_FOR_FILE_EXTENSION.keys())
     if file_extension not in support_type_list:
         raise Exception(
-            f"now only support files of these formats: {','.join(support_type_list)}"
+            f"Supported file extension: {file_extension}, Now only support files of these formats: {','.join(support_type_list)}"
         )
 
     driver_type = DRIVER_TYPE_FOR_FILE_EXTENSION.get(file_extension)
@@ -146,7 +146,7 @@ def main():
         output_path=output_path,
         api_url=args.api_url,
         is_test=args.is_test,
-        test_num=args.test_num,
+        test_count=args.test_count,
     )
 
     driver.make()
