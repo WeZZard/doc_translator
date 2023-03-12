@@ -9,7 +9,7 @@ class DocumentDriver(ABC):
     In the future:
     - DocumentLoader shall only load documents into translatable items.
     - TranslateWorker shall only receive translatable items.
-    - DocumentGenerator shall generates new documents with translated items.
+    - DocumentGenerator shall generate new documents with template and translated items.
     """
 
     @staticmethod
