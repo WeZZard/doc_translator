@@ -1,6 +1,5 @@
-This forked added Google Translate support, only supported translate to `zh-CN`.
+This fork added Google Translate support, only supported translate to `zh-CN`.
 Usage: make sure to add `--model google` in the command.
-
 
 **[中文](./README-CN.md) | English**
 
@@ -9,18 +8,17 @@ The bilingual_book_maker is an AI translation tool that uses ChatGPT to assist u
 
 ![image](https://user-images.githubusercontent.com/15976103/222317531-a05317c5-4eee-49de-95cd-04063d9539d9.png)
 
-
 ## Preparation
 
 1. ChatGPT or OpenAI token [^token]
 2. epub books
-3. Environment with internet access or proxy
+3. An environment with internet access or proxy
 4. Python 3.8+
 
 ## Use
 
 1. `pip install -r requirements.txt`
-2. Use `--openai_key` option to specify OpenAI API key. If you have multiple keys, separate them by commas (xxx,xxx,xxx) to reduce errors caused by API call limits.  
+2. Use `--openai-key` option to specify OpenAI API key. If you have multiple keys, separate them by commas (xxx,xxx,xxx) to reduce errors caused by API call limits.  
    Or, just set environment variable `OPENAI_API_KEY` to ignore this option.
 3. A sample book, `test_books/animal_farm.epub`, is provided for testing purposes.
 4. The default underlying model is [GPT-3.5-turbo](https://openai.com/blog/introducing-chatgpt-and-whisper-apis), which is used by ChatGPT currently. Use `--model gpt3` to change the underlying model to `GPT3`
@@ -42,12 +40,12 @@ The bilingual_book_maker is an AI translation tool that uses ChatGPT to assist u
 
 ```shell
 # Test quickly
-python3 make_book.py --book_name test_books/animal_farm.epub --openai_key ${openai_key}  --test --language zh-hans
+python3 make_book.py --book_name test_books/animal_farm.epub --openai-key ${openai_key}  --test --language zh-hans
 
 # Or translate the whole book
-python3 make_book.py --book_name test_books/animal_farm.epub --openai_key ${openai_key} --language zh-hans
+python3 make_book.py --book_name test_books/animal_farm.epub --openai-key ${openai_key} --language zh-hans
 
-# Set env OPENAI_API_KEY to ignore option --openai_key
+# Set env OPENAI_API_KEY to ignore option --openai-key
 export OPENAI_API_KEY=${your_api_key}
 
 # Use the GPT-3 model with Japanese
@@ -59,10 +57,10 @@ python3 make_book.py --book_name test_books/animal_farm.epub --translate-tags di
 
 More understandable example
 ```shell
-python3 make_book.py --book_name 'animal_farm.epub' --openai_key sk-XXXXX --api_base 'https://xxxxx/v1'
+python3 make_book.py --book_name 'animal_farm.epub' --openai-key sk-XXXXX --api_base 'https://xxxxx/v1'
 
 # Or python3 is not in your PATH
-python make_book.py --book_name 'animal_farm.epub' --openai_key sk-XXXXX --api_base 'https://xxxxx/v1'
+python make_book.py --book_name 'animal_farm.epub' --openai-key sk-XXXXX --api_base 'https://xxxxx/v1'
 ```
 
 ## Docker
@@ -79,10 +77,10 @@ docker build --tag bilingual_book_maker .
 # Windows PowerShell
 $folder_path=your_folder_path # $folder_path="C:\Users\user\mybook\"
 $book_name=your_book_name # $book_name="animal_farm.epub"
-$openai_key=your_api_key # $openai_key="sk-xxx"
+$openai_key=your_api_key # $openai-key="sk-xxx"
 $language=your_language # see utils.py
 
-docker run --rm --name bilingual_book_maker --mount type=bind,source=$folder_path,target='/app/test_books' bilingual_book_maker --book_name "/app/test_books/$book_name" --openai_key $openai_key --language $language
+docker run --rm --name bilingual_book_maker --mount type=bind,source=$folder_path,target='/app/test_books' bilingual_book_maker --book_name "/app/test_books/$book_name" --openai-key $openai_key --language $language
 
 # Linux
 export folder_path=${your_folder_path}
@@ -90,19 +88,19 @@ export book_name=${your_book_name}
 export openai_key=${your_api_key}
 export language=${your_language}
 
-docker run --rm --name bilingual_book_maker --mount type=bind,source=${folder_path},target='/app/test_books' bilingual_book_maker --book_name "/app/test_books/${book_name}" --openai_key ${openai_key} --language "${language}"
+docker run --rm --name bilingual_book_maker --mount type=bind,source=${folder_path},target='/app/test_books' bilingual_book_maker --book_name "/app/test_books/${book_name}" --openai-key ${openai_key} --language "${language}"
 ```
 
 For example:
 
 ```shell
 # Linux
-docker run --rm --name bilingual_book_maker --mount type=bind,source=/home/user/my_books,target='/app/test_books' bilingual_book_maker --book_name /app/test_books/animal_farm.epub --openai_key sk-XXX --test --test_count 1 --language zh-hant
+docker run --rm --name bilingual_book_maker --mount type=bind,source=/home/user/my_books,target='/app/test_books' bilingual_book_maker --book_name /app/test_books/animal_farm.epub --openai-key sk-XXX --test --test_count 1 --language zh-hant
 ```
 
 ## Notes
 
-1. API token from free trial has limit. If you want to speed up the process, consider paying for the service or use multiple OpenAI tokens
+1. There are limitations to free trial API tokens. If you want to speed up the process, consider paying for the service or using multiple OpenAI tokens
 2. PR is welcome
 3. The DeepL model will be updated later.
 
